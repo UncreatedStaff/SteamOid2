@@ -3,12 +3,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
-using SteamOid2;
 using SteamOid2.API;
 using System.Diagnostics;
 
-namespace SteamLogin_Testing;
-
+namespace SteamOid2.Sample;
 internal class Program
 {
     public static IHost Host { get; private set; } = null!;
@@ -39,12 +37,14 @@ internal class Program
         if (!File.Exists(Path.Combine(dir, "appsettings.json")))
         {
             File.WriteAllText(Path.Combine(dir, "appsettings.json"), 
-@"{
-  ""OID2"": {
-    ""Realm"": ""http://localhost:8001/"",
-    ""CallbackUri"": ""http://localhost:8001/openid/login""
-  }
-}");
+                """
+                {
+                  "OID2": {
+                    "Realm": "http://localhost:8001/",
+                    "CallbackUri": "http://localhost:8001/openid/login"
+                  }
+                }
+                """);
         }
 
         builder.ConfigureHostConfiguration(configBuilder => configBuilder

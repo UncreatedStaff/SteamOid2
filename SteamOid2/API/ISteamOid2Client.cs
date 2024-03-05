@@ -12,12 +12,14 @@ public interface ISteamOid2Client
     /// Defines the domain name used in the Steam login page.
     /// </summary>
     /// <remarks>Must be the same as the domain of <see cref="CallbackUri"/>.</remarks>
+    /// <exception cref="InvalidOperationException">Realm was expected to be passed at runtime instead of through the constructor.</exception>
     string Realm { get; }
 
     /// <summary>
     /// Defines the callback URL that the user will be redirected to.
     /// </summary>
     /// <remarks>Must be the same domain as <see cref="Realm"/>.</remarks>
+    /// <exception cref="InvalidOperationException">Callback was expected to be passed at runtime instead of through the constructor.</exception>
     string CallbackUri { get; }
 
     /// <summary>
@@ -35,8 +37,18 @@ public interface ISteamOid2Client
     /// <summary>
     /// Construct a <seealso cref="Uri"/> that will redirect the user to the Steam login page with the necessary data in the query parameters.
     /// </summary>
+    /// <exception cref="InvalidOperationException">Callback and realm were expected to be passed at runtime instead of through the constructor.</exception>
+    /// <exception cref="ArgumentException">Callback must be part of the same domain as realm.</exception>
     [Pure]
     ValueTask<Uri> GetLoginUri(CancellationToken token = default);
+
+    /// <summary>
+    /// Construct a <seealso cref="Uri"/> that will redirect the user to the Steam login page with the necessary data in the query parameters.
+    /// </summary>
+    /// <remarks>Specifies a custom realm and callback instad of using the ones passed in the constructor.</remarks>
+    /// <exception cref="ArgumentException">Callback must be part of the same domain as realm.</exception>
+    [Pure]
+    ValueTask<Uri> GetLoginUri(string realmUri, string callbackUri, CancellationToken token = default);
 
     /// <summary>
     /// Construct a <seealso cref="Uri"/> that will authorize the response from the user after they've logged in. Check for a valid response with <see cref="ParseIdReponse"/> first.
@@ -48,8 +60,17 @@ public interface ISteamOid2Client
     /// Parse the query string of the <paramref name="uri"/> to check for a structurally-valid response from the callback uri, and if it's valid get the Steam64 ID.
     /// </summary>
     /// <param name="uri"><seealso cref="Uri"/> returned from the callback uri.</param>
+    /// <exception cref="InvalidOperationException">Callback was expected to be passed at runtime instead of through the constructor.</exception>
     [Pure]
     SteamOid2Response ParseIdReponse(Uri uri);
+
+    /// <summary>
+    /// Parse the query string of the <paramref name="uri"/> to check for a structurally-valid response from the callback uri, and if it's valid get the Steam64 ID.
+    /// </summary>
+    /// <param name="uri"><seealso cref="Uri"/> returned from the callback uri.</param>
+    /// <remarks>Specifies a custom callback instad of using the ones passed in the constructor.</remarks>
+    [Pure]
+    SteamOid2Response ParseIdReponse(ReadOnlySpan<char> expectedCallbackUri, Uri uri);
 
     /// <summary>
     /// Parse the query string of the <paramref name="uri"/> to check for a structurally-valid response from the validation API.

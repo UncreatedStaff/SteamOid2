@@ -8,7 +8,7 @@ using System.Security;
 using System.Text;
 using System.Web;
 
-namespace SteamLogin_Testing;
+namespace SteamOid2.Sample;
 internal class LoginHost : IHostedService, IDisposable
 {
     private readonly HttpListener _httpListener;

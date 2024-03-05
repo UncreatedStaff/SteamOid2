@@ -10,13 +10,7 @@ internal class SteamOid2ResourceReader
         Async = true,
         ValidationType = ValidationType.None
     };
-    public string Text { get; }
-    public XmlSerializer Serializer { get; }
-    public SteamOid2ResourceReader(string text)
-    {
-        Text = text;
-        Serializer = new XmlSerializer(typeof(SteamOid2Xri));
-    }
+    public XmlSerializer Serializer { get; } = new XmlSerializer(typeof(SteamOid2Xri));
     public async Task<SteamOid2Resource?> Read(Stream stream, CancellationToken token = default)
     {
         using XmlReader reader = XmlReader.Create(stream, DefaultSettings);
@@ -34,9 +28,9 @@ internal class SteamOid2ResourceReader
             string name = reader.Name;
             await reader.ReadAsync().ConfigureAwait(false);
             token.ThrowIfCancellationRequested();
-            if (name.Equals("Type"))
+            if (name.Equals("Type", StringComparison.OrdinalIgnoreCase))
                 type = reader.Value;
-            else if (name.Equals("URI"))
+            else if (name.Equals("URI", StringComparison.OrdinalIgnoreCase))
                 uri = reader.Value;
             if (i != 1)
             {
