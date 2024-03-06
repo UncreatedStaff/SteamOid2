@@ -1,4 +1,5 @@
-﻿using SteamOid2.XRI;
+﻿using SteamOid2.Steam;
+using SteamOid2.XRI;
 using System.Diagnostics.Contracts;
 
 namespace SteamOid2.API;
@@ -51,7 +52,7 @@ public interface ISteamOid2Client
     ValueTask<Uri> GetLoginUri(string realmUri, string callbackUri, CancellationToken token = default);
 
     /// <summary>
-    /// Construct a <seealso cref="Uri"/> that will authorize the response from the user after they've logged in. Check for a valid response with <see cref="ParseIdReponse"/> first.
+    /// Construct a <seealso cref="Uri"/> that will authorize the response from the user after they've logged in. Check for a valid response with <see cref="ParseIdReponse(Uri)"/> or it's overload first.
     /// </summary>
     [Pure]
     ValueTask<Uri> GetAuthorizeUri(Uri idResponseUri, CancellationToken token = default);
@@ -67,17 +68,17 @@ public interface ISteamOid2Client
     /// <summary>
     /// Parse the query string of the <paramref name="uri"/> to check for a structurally-valid response from the callback uri, and if it's valid get the Steam64 ID.
     /// </summary>
+    /// <param name="expectedCallbackUri">Callback originally passed to the URI, used to validate the callback sent back from Steam.</param>
     /// <param name="uri"><seealso cref="Uri"/> returned from the callback uri.</param>
     /// <remarks>Specifies a custom callback instad of using the ones passed in the constructor.</remarks>
     [Pure]
     SteamOid2Response ParseIdReponse(ReadOnlySpan<char> expectedCallbackUri, Uri uri);
 
     /// <summary>
-    /// Parse the query string of the <paramref name="uri"/> to check for a structurally-valid response from the validation API.
+    /// Parse the query string of the <paramref name="keyValuePairContent"/> to check for a structurally-valid response from the validation API.
     /// </summary>
-    /// <param name="uri"></param>
-    /// <param name="invalidateHandle"></param>
-    /// <returns></returns>
+    /// <param name="keyValuePairContent">The raw text content received from Steam's authorization check.</param>
+    /// <param name="invalidateHandle">The OpenID invalidate handle.</param>
     [Pure]
     Oid2AuthenticationStatus CheckAuthorizationResponse(string keyValuePairContent, out string? invalidateHandle);
 }

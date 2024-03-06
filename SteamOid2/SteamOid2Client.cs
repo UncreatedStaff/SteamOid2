@@ -55,6 +55,7 @@ public class SteamOid2Client : ISteamOid2Client
     /// <summary>
     /// Creates a <see cref="ISteamOid2Client"/> that requires you to pass the realm and callback when you call <see cref="GetLoginUri(string, string, CancellationToken)"/> instead of at construction time.
     /// </summary>
+    /// <param name="logger">Optional logger for logging errors.</param>
     /// <remarks>This constructor is not available in .NET Framework.</remarks>
     public SteamOid2Client(ILogger<SteamOid2Client>? logger)
     {
@@ -65,6 +66,8 @@ public class SteamOid2Client : ISteamOid2Client
     /// Dependency-injection constructor to create a client from a <paramref name="configuration"/> with a section 'OID2' with properties '<see cref="Realm"/>' and '<see cref="CallbackUri"/>'.
     /// </summary>
     /// <remarks>This constructor is not available in .NET Framework.</remarks>
+    /// <param name="logger">Optional logger for logging errors.</param>
+    /// <param name="configuration">Provides a configuration with the section and properties explained in the summary.</param>
     /// <exception cref="ArgumentException">Callback must be part of the same domain as realm.</exception>
     public SteamOid2Client(ILogger<SteamOid2Client>? logger, IConfiguration configuration) : this(logger)
     {
@@ -79,6 +82,7 @@ public class SteamOid2Client : ISteamOid2Client
     /// <remarks>This constructor is not available in .NET Framework.</remarks>
     /// <param name="realm">Defines the domain name used in the Steam login page. Must be the same as the domain of <paramref name="callback"/>.</param>
     /// <param name="callback">Defines the callback URL that the user will be redirected to. Must be the same domain as <paramref name="realm"/>.</param>
+    /// <param name="logger">Optional logger for logging errors.</param>
     /// <exception cref="ArgumentNullException"><paramref name="realm"/> or <paramref name="callback"/> was <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">Callback must be part of the same domain as realm.</exception>
     public SteamOid2Client(string realm, string callback, ILogger<SteamOid2Client>? logger) : this(realm, callback)
@@ -133,6 +137,9 @@ public class SteamOid2Client : ISteamOid2Client
     }
 #endif
 
+    /// <summary>
+    /// Overridable method that uses an <see cref="HttpClient"/> to download the Steam OpenID 2.0 resources.
+    /// </summary>
     protected virtual async Task<bool> Discover(CancellationToken token = default)
     {
         // download the XRI resource from Steam to discover the OpenID Provider Endpoint URI

@@ -2,16 +2,16 @@
 
 namespace SteamOid2.XRI.Models;
 
-public class SteamOid2Xri
+internal class SteamOid2Xri
 {
     public SteamOid2XriXrds? XRDS { get; set; }
 }
-public class SteamOid2XriXrds
+internal class SteamOid2XriXrds
 {
     [XmlArray("Service")]
     public SteamOid2XriService[]? XRD { get; set; }
 }
-public class SteamOid2XriService
+internal class SteamOid2XriService
 {
     [XmlAttribute("priority")]
     public int Priority { get; set; }

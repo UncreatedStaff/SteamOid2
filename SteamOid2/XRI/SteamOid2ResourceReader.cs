@@ -44,11 +44,24 @@ internal class SteamOid2ResourceReader
         return content;
     }
 }
+/// <summary>
+/// OpenID 2.0 resource for Steam.
+/// </summary>
 public class SteamOid2Resource
 {
+    /// <summary>
+    /// OpenID 2.0 protocol version.
+    /// </summary>
     public string ProtocolVersion { get; }
+
+    /// <summary>
+    /// OpenID 2.0 provider endpoint URL.
+    /// </summary>
     public string OPEndpointURL { get; }
-    
+
+    /// <summary>
+    /// Creates a new <see cref="SteamOid2Resource"/> given a protocol version and endpoint URL.
+    /// </summary>
     public SteamOid2Resource(string protocolVersion, string opEndpointURL)
     {
         ProtocolVersion = protocolVersion;
