@@ -47,7 +47,7 @@ Copy the public key to your fork and replace the existing one if you want.
 Set the `StrongNameKeyPath` property in the .csproj file to the path of the .snk file.
 
 ## Sample implementation with a console application and HttpListener
-https://github.com/UncreatedStaff/SteamOid2/blob/master/LoginHost.cs
+https://github.com/UncreatedStaff/SteamOid2/blob/master/SteamOid2.Sample/LoginHost.cs
 
 ### Steam Logo
 ©2024 Valve Corporation. Steam and the Steam logo are trademarks and/or registered trademarks of Valve Corporation in the U.S. and/or other countries.
