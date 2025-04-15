@@ -1,16 +1,14 @@
-﻿using SteamOid2.API;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using SteamOid2.API;
 using SteamOid2.Steam;
+using SteamOid2.WebRequests;
 using SteamOid2.XRI;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Web;
-#if NETFRAMEWORK
-using System.Net.Http;
-#else
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-#endif
 
 namespace SteamOid2;
 
@@ -20,10 +18,9 @@ public class SteamOid2Client : ISteamOid2Client
     private const string Spec = "http://specs.openid.net/auth/2.0";
     private const string IdentitySpec = "http://specs.openid.net/auth/2.0/identifier_select";
 
-#if !NETFRAMEWORK
     private readonly ILogger<SteamOid2Client>? _logger;
+    private readonly ISteamOid2WebRequestProvider _webRequestProvider;
     private readonly IConfiguration? _config;
-#endif
     private readonly string? _realm;
     private readonly string? _callback;
     private SteamOid2Resource? _discoveredResource;
@@ -33,7 +30,7 @@ public class SteamOid2Client : ISteamOid2Client
     /// </summary>
     public SteamOid2Client()
     {
-
+        _webRequestProvider = new SystemNetHttpWebRequestProvider();
     }
 
     /// <summary>
@@ -47,11 +44,11 @@ public class SteamOid2Client : ISteamOid2Client
     {
         _realm = realm ?? throw new ArgumentNullException(nameof(realm));
         _callback = callback ?? throw new ArgumentNullException(nameof(callback));
+        _webRequestProvider = new SystemNetHttpWebRequestProvider();
         if (!_callback.StartsWith(_realm, StringComparison.Ordinal))
             throw new ArgumentException("Callback must be part of the same domain as realm.", nameof(_callback));
     }
 
-#if !NETFRAMEWORK
     /// <summary>
     /// Creates a <see cref="ISteamOid2Client"/> that requires you to pass the realm and callback when you call <see cref="GetLoginUri(string, string, CancellationToken)"/> instead of at construction time.
     /// </summary>
@@ -60,6 +57,7 @@ public class SteamOid2Client : ISteamOid2Client
     public SteamOid2Client(ILogger<SteamOid2Client>? logger)
     {
         _logger = logger;
+        _webRequestProvider = new SystemNetHttpWebRequestProvider();
     }
 
     /// <summary>
@@ -69,9 +67,20 @@ public class SteamOid2Client : ISteamOid2Client
     /// <param name="logger">Optional logger for logging errors.</param>
     /// <param name="configuration">Provides a configuration with the section and properties explained in the summary.</param>
     /// <exception cref="ArgumentException">Callback must be part of the same domain as realm.</exception>
-    public SteamOid2Client(ILogger<SteamOid2Client>? logger, IConfiguration configuration) : this(logger)
+    public SteamOid2Client(ILogger<SteamOid2Client>? logger, IConfiguration configuration) : this(logger, configuration, null) { }
+
+    /// <summary>
+    /// Dependency-injection constructor to create a client from a <paramref name="configuration"/> with a section 'OID2' with properties '<see cref="Realm"/>' and '<see cref="CallbackUri"/>'.
+    /// </summary>
+    /// <remarks>This constructor is not available in .NET Framework.</remarks>
+    /// <param name="logger">Optional logger for logging errors.</param>
+    /// <param name="configuration">Provides a configuration with the section and properties explained in the summary.</param>
+    /// <param name="webRequestProvider">API for implementing a web request to <see cref="Constants.SteamXRIProvider"/>.</param>
+    /// <exception cref="ArgumentException">Callback must be part of the same domain as realm.</exception>
+    public SteamOid2Client(ILogger<SteamOid2Client>? logger, IConfiguration configuration, ISteamOid2WebRequestProvider? webRequestProvider) : this(logger)
     {
         _config = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _webRequestProvider = webRequestProvider ?? new SystemNetHttpWebRequestProvider();
         if (!CallbackUri.StartsWith(Realm, StringComparison.Ordinal))
             throw new ArgumentException("Callback must be a part of the same domain as realm.", nameof(_callback));
     }
@@ -99,18 +108,10 @@ public class SteamOid2Client : ISteamOid2Client
     public string CallbackUri => _config == null
         ? _callback ?? throw new InvalidOperationException("Callback was not passed in constructor.")
         : _config.GetSection("OID2")["CallbackUri"] ?? "http://127.0.0.1:80/login/";
-#else
-    /// <inheritdoc/>
-    public string Realm => _realm ?? throw new InvalidOperationException("Realm was not passed in constructor.");
-
-    /// <inheritdoc/>
-    public string CallbackUri => _callback ?? throw new InvalidOperationException("Callback was not passed in constructor.");
-#endif
 
     /// <inheritdoc/>
     public string ContentType => "x-www-urlencoded";
 
-#if NETFRAMEWORK
     /// <inheritdoc/>
     public virtual ValueTask<SteamOid2Resource> GetSteamOid2Resource(bool forceRefresh = false, CancellationToken token = default)
     {
@@ -124,53 +125,71 @@ public class SteamOid2Client : ISteamOid2Client
             return await client.Discover(token).ConfigureAwait(false) ? client._discoveredResource! : Constants.BackupSteamOid2Resource;
         }
     }
-#else
-    /// <inheritdoc/>
-    public async ValueTask<SteamOid2Resource> GetSteamOid2Resource(bool forceRefresh = false, CancellationToken token = default)
-    {
-        if (_discoveredResource == null || forceRefresh)
-        {
-            return await Discover(token).ConfigureAwait(false) ? _discoveredResource! : Constants.BackupSteamOid2Resource;
-        }
-
-        return _discoveredResource;
-    }
-#endif
 
     /// <summary>
-    /// Overridable method that uses an <see cref="HttpClient"/> to download the Steam OpenID 2.0 resources.
+    /// Overridable method that uses the associated <see cref="ISteamOid2WebRequestProvider"/> to download the Steam OpenID 2.0 resources.
     /// </summary>
     protected virtual async Task<bool> Discover(CancellationToken token = default)
     {
-        // download the XRI resource from Steam to discover the OpenID Provider Endpoint URI
-        HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Get, Constants.SteamXRIProvider);
-
-        using HttpClient httpClient = new HttpClient();
-
-        HttpResponseMessage response = await httpClient.SendAsync(message, token).ConfigureAwait(false);
-
-        SteamOid2ResourceReader reader = new SteamOid2ResourceReader();
-        SteamOid2Resource? content = await reader.Read(
-#if NET5_0_OR_GREATER
-            await response.Content.ReadAsStreamAsync(token)
-#else
-            await response.Content.ReadAsStreamAsync()
-#endif
-            , token);
-
-        if (content == null)
+        const int tryCt = 5;
+        for (int i = 0; i < tryCt; ++i)
         {
-#if !NETFRAMEWORK
-            _logger?.LogError($"Unable to get Steam OpenID 2.0 XRDS document from \"{Constants.SteamXRIProvider}\".");
-#else
-            Console.Error.WriteLine($"Unable to get Steam OpenID 2.0 XRDS document from \"{Constants.SteamXRIProvider}\".");
-#endif
-            return false;
+            try
+            {
+                // download the XRI resource from Steam to discover the OpenID Provider Endpoint URI
+                SteamOid2Resource? content = await _webRequestProvider.GetSteamOid2Resource(Constants.SteamXRIProvider, token);
+
+                if (content != null)
+                {
+                    _discoveredResource = content;
+                    return true;
+                }
+
+                LogError(null, "Unable to get Steam OpenID 2.0 XRDS document from \"{0}\" (try {1}/{2}).", Constants.SteamXRIProvider, i + 1, tryCt);
+
+                if (i == tryCt - 1)
+                    return false;
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "Error getting Steam OpenID 2.0 XRDS document from \"{0}\" (try {1}/{2}).", Constants.SteamXRIProvider, i + 1, tryCt);
+
+                if (i == tryCt - 1)
+                    return false;
+            }
+            
+            await Task.Delay(500 * (i + 1), token);
         }
-        
-        _discoveredResource = content;
-        return true;
+
+        return false;
     }
+
+    private void LogError(Exception? ex, string message, params object[]? args)
+    {
+        args ??= Array.Empty<object>();
+        if (_logger == null)
+        {
+            ConsoleColor clr = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(message, args);
+            Debug.WriteLine(message, args);
+            if (ex != null)
+            {
+                Console.WriteLine(ex);
+                Debug.WriteLine(ex);
+            }
+
+            Console.ForegroundColor = clr;
+        }
+        else
+        {
+            if (ex != null)
+                _logger?.LogError(ex, message, args);
+            else
+                _logger?.LogError(message, args);
+        }
+    }
+
 #if NETFRAMEWORK
     private static readonly char[] SplitChars = [ '\n' ];
 #endif
@@ -359,7 +378,7 @@ public class SteamOid2Client : ISteamOid2Client
     /// <inheritdoc/>
     public ValueTask<Uri> GetLoginUri(CancellationToken token = default) => GetLoginUri(Realm, CallbackUri, token);
 
-#if NETFRAMEWORK
+
     /// <inheritdoc/>
     public virtual ValueTask<Uri> GetLoginUri(string realmUri, string callbackUri, CancellationToken token = default)
     {
@@ -367,55 +386,35 @@ public class SteamOid2Client : ISteamOid2Client
             throw new ArgumentException("Callback must be part of the same domain as realm.", nameof(_callback));
         ValueTask<SteamOid2Resource> resx = GetSteamOid2Resource(false, token);
         if (!resx.IsCompleted)
-            return new ValueTask<Uri>(GetLoginUriIntl(realmUri, callbackUri, resx));
+            return new ValueTask<Uri>(Core(realmUri, callbackUri, resx));
 
         string url = MakeUrl(realmUri.AsSpan(), callbackUri.AsSpan(), resx.Result.OPEndpointURL.AsSpan());
         return new ValueTask<Uri>(new Uri(url));
 
-        static async Task<Uri> GetLoginUriIntl(string realmUri, string callbackUri, ValueTask< SteamOid2Resource> resx)
+        static async Task<Uri> Core(string realmUri, string callbackUri, ValueTask< SteamOid2Resource> resx)
         {
             SteamOid2Resource resource = await resx.ConfigureAwait(false);
             string url = MakeUrl(realmUri.AsSpan(), callbackUri.AsSpan(), resource.OPEndpointURL.AsSpan());
             return new Uri(url);
         }
     }
-#else
-    /// <inheritdoc/>
-    public virtual async ValueTask<Uri> GetLoginUri(string realmUri, string callbackUri, CancellationToken token = default)
-    {
-        if (!callbackUri.StartsWith(realmUri, StringComparison.Ordinal))
-            throw new ArgumentException("Callback must be part of the same domain as realm.", nameof(_callback));
-        SteamOid2Resource resource = await GetSteamOid2Resource(false, token).ConfigureAwait(false);
 
-        string url = MakeUrl(realmUri.AsSpan(), callbackUri.AsSpan(), resource.OPEndpointURL.AsSpan());
-        return new Uri(url);
-    }
-#endif
-
-#if NETFRAMEWORK
     /// <inheritdoc/>
     public virtual ValueTask<Uri> GetAuthorizeUri(Uri idResponseUri, CancellationToken token = default)
     {
         ValueTask<SteamOid2Resource> resx = GetSteamOid2Resource(false, token);
         if (!resx.IsCompleted)
-            return new ValueTask<Uri>(GetAuthorizeUriIntl(idResponseUri, resx));
+            return new ValueTask<Uri>(Core(idResponseUri, resx));
 
         return new ValueTask<Uri>(GetAuthorizedUriIntl(idResponseUri, resx.Result));
 
-        static async Task<Uri> GetAuthorizeUriIntl(Uri idResponseUri, ValueTask< SteamOid2Resource> resx)
+        static async Task<Uri> Core(Uri idResponseUri, ValueTask< SteamOid2Resource> resx)
         {
             SteamOid2Resource resource = await resx.ConfigureAwait(false);
             return GetAuthorizedUriIntl(idResponseUri, resource);
         }
     }
-#else
-    /// <inheritdoc/>
-    public virtual async ValueTask<Uri> GetAuthorizeUri(Uri idResponseUri, CancellationToken token = default)
-    {
-        SteamOid2Resource resource = await GetSteamOid2Resource(false, token).ConfigureAwait(false);
-        return GetAuthorizedUriIntl(idResponseUri, resource);
-    }
-#endif
+
     private static Uri GetAuthorizedUriIntl(Uri idResponseUri, SteamOid2Resource resource)
     {
         NameValueCollection queryParameters = HttpUtility.ParseQueryString(idResponseUri.Query);

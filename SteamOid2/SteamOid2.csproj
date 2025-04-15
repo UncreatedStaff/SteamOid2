@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>12.0</LangVersion>
-    <Version>1.0.1</Version>
+    <Version>1.1.0</Version>
     <AssemblyVersion>$(Version).0</AssemblyVersion>
     <FileVersion>$(Version).0</FileVersion>
     <PackageVersion>$(Version)</PackageVersion>
@@ -15,14 +15,14 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <RepositoryUrl>$(PackageProjectUrl)</RepositoryUrl>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
-    <PackageReleaseNotes>https://github.com/UncreatedStaff/SteamOid2/releases</PackageReleaseNotes>
+    <PackageReleaseNotes>Made some of the XML classes public because it was causing issues with System.Xml. Abstracted web requests to a separate interface.</PackageReleaseNotes>
     <Description>Library for integrating with Steam's Open-ID provider in .NET or .NET Framework, as described here: https://partner.steamgames.com/doc/features/auth#website.</Description>
     <PackageProjectUrl>https://github.com/UncreatedStaff/SteamOid2</PackageProjectUrl>
+    <RepositoryUrl>$(PackageProjectUrl)</RepositoryUrl>
     <PackageTags>steam;openid;open-id;oid;oid2;steamcommunity;oauth;steamworks</PackageTags>
     <PackageIcon>icon.png</PackageIcon>
     <Authors>DanielWillett</Authors>
@@ -47,8 +47,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="[2.1.0,)" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[2.1.0,)" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[2.1.0,)" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[2.1.0,)" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework) == 'net461'">
     <PackageReference Include="System.Net.Http" Version="[4.3.4,)" />

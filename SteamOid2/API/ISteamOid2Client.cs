@@ -1,4 +1,4 @@
-﻿using SteamOid2.Steam;
+using SteamOid2.Steam;
 using SteamOid2.XRI;
 using System.Diagnostics.Contracts;
 
@@ -7,6 +7,7 @@ namespace SteamOid2.API;
 /// <summary>
 /// Service used to interact with the Steam OpenID 2.0 interface for logging into steam through a third party website.
 /// </summary>
+/// <remarks>Default implementation is <see cref="SteamOid2Client"/>.</remarks>
 public interface ISteamOid2Client
 {
     /// <summary>

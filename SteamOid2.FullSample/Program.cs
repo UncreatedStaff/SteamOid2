@@ -1,12 +1,11 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Serilog;
-using Serilog.Events;
+using Microsoft.Extensions.Logging;
 using SteamOid2.API;
 using System.Diagnostics;
 
-namespace SteamOid2.Sample;
+namespace SteamOid2.FullSample;
 internal class Program
 {
     public static IHost Host { get; private set; } = null!;
@@ -15,15 +14,8 @@ internal class Program
         // this is how you set up a DI application from scratch. Host contains a service container which is just a list of service implementations
         HostBuilder builder = new HostBuilder();
 
-        // set up Serilog
-        Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Debug()
-            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-            .Enrich.FromLogContext()
-            .WriteTo.Console()
-            .CreateLogger();
-
-        builder.ConfigureLogging(x => x.AddSerilog());
+        // set up logging
+        builder.ConfigureLogging(l => l.AddSimpleConsole());
 
         if (Debugger.IsAttached)
         {

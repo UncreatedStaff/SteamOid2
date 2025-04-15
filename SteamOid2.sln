@@ -5,9 +5,9 @@ VisualStudioVersion = 17.7.33920.267
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SteamOid2", "SteamOid2\SteamOid2.csproj", "{4F0A5D51-D33B-4D1D-AA5D-ECAD4E8B13AB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SteamOid2.Sample", "SteamOid2.Sample\SteamOid2.Sample.csproj", "{AD59133B-23E9-4AED-AEC0-D3EA843FE833}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SteamOid2.FullSample", "SteamOid2.FullSample\SteamOid2.FullSample.csproj", "{AD59133B-23E9-4AED-AEC0-D3EA843FE833}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SteamOid2.Sample.NET461", "SteamOid2.Sample.NET461\SteamOid2.Sample.NET461.csproj", "{E28EF1B4-1DF3-44C2-A12F-185B308AAC0F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SteamOid2.Sample.NET461", "SteamOid2.BasicSample\SteamOid2.BasicSample.csproj", "{E28EF1B4-1DF3-44C2-A12F-185B308AAC0F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

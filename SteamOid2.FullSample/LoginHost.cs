@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SteamOid2.API;
 using System.Collections.Specialized;
@@ -8,7 +8,7 @@ using System.Security;
 using System.Text;
 using System.Web;
 
-namespace SteamOid2.Sample;
+namespace SteamOid2.FullSample;
 internal class LoginHost : IHostedService, IDisposable
 {
     private readonly HttpListener _httpListener;

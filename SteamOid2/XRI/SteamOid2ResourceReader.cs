@@ -1,4 +1,4 @@
-﻿using System.Xml;
+using System.Xml;
 using System.Xml.Serialization;
 using SteamOid2.XRI.Models;
 
@@ -44,6 +44,7 @@ internal class SteamOid2ResourceReader
         return content;
     }
 }
+
 /// <summary>
 /// OpenID 2.0 resource for Steam.
 /// </summary>

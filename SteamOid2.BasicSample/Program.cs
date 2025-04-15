@@ -1,6 +1,6 @@
-﻿using SteamOid2.API;
+using SteamOid2.API;
 
-namespace SteamOid2.Sample;
+namespace SteamOid2.BasicSample;
 
 internal class Program
 {

@@ -1,4 +1,4 @@
-﻿using SteamOid2.API;
+using SteamOid2.API;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Net;
@@ -7,7 +7,7 @@ using System.Security;
 using System.Text;
 using System.Web;
 
-namespace SteamOid2.Sample;
+namespace SteamOid2.BasicSample;
 internal class LoginHost : IDisposable
 {
     private readonly HttpListener _httpListener;
