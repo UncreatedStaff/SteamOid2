@@ -7,12 +7,15 @@ Library for integrating with Steam's Open-ID provider in .NET or .NET Framework,
 
 Available for .NET Framework 4.6.1+, .NET Standard 2.1+, and .NET 5.0+.
 
+## Justification
+This library is very bare-bones and is meant to support you in implementing your own Steam auth in whatever environment you want. It doesn't provide full authentication, just the helper methods you need to make your own.
+
 ## Usage
 ```cs
 using SteamOid2;
 using SteamOid2.API;
 
-// A DI constructor is also available using IConfiguration in the .NET and .NET Standard targets.
+// A DI constructor is also available using ILogger and IConfiguration
 ISteamOid2Client client = new SteamOid2Client("http://localhost:8001/", "http://localhost:8001/openid/login");
 ```
 
@@ -25,6 +28,8 @@ ISteamOid2Client client = new SteamOid2Client("http://localhost:8001/", "http://
 * Send a **POST** request to `client.GetAuthorizeUri(uri)` to ask Steam to confirm that the Steam ID provided was actually logged in to (from the backend).
 
 * Use `client.CheckAuthorizationResponse(response)` to check that the response from the **POST** indicates a valid login session.
+
+* For more detailed information see the 2 available samples. The FullSample contains a dependency-injection example and the BasicSample is just a basic console application.
 
 If you're seeing `Error` when you try to log in from Steam, make sure the realm domain name is the same as the callback domain name.
 
